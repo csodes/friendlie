@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Warm, friendly, explicitly non-romantic palette.
+       Primary = friendly teal/green; accents = sunshine + coral-free warmth. */
+    --background: 40 33% 99%;
+    --foreground: 215 28% 17%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 17%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 28% 17%;
+
+    --primary: 173 58% 39%;          /* teal-600-ish */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 174 42% 94%;        /* soft teal tint */
+    --secondary-foreground: 175 50% 22%;
+
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 38 92% 95%;            /* sunshine tint */
+    --accent-foreground: 32 81% 29%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 20% 90%;
+    --input: 214 20% 90%;
+    --ring: 173 58% 39%;
+
+    --brand-teal: 173 58% 39%;
+    --brand-sunshine: 38 92% 60%;
+
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 215 28% 12%;
+    --foreground: 210 20% 96%;
+
+    --card: 215 28% 15%;
+    --card-foreground: 210 20% 96%;
+
+    --popover: 215 28% 15%;
+    --popover-foreground: 210 20% 96%;
+
+    --primary: 173 58% 45%;
+    --primary-foreground: 215 28% 10%;
+
+    --secondary: 215 20% 22%;
+    --secondary-foreground: 210 20% 96%;
+
+    --muted: 215 20% 22%;
+    --muted-foreground: 215 16% 65%;
+
+    --accent: 38 40% 24%;
+    --accent-foreground: 38 92% 85%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 20% 26%;
+    --input: 215 20% 26%;
+    --ring: 173 58% 45%;
+
+    --brand-teal: 173 58% 45%;
+    --brand-sunshine: 38 92% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* Subtle, friendly card gradient used on feature/discovery cards. */
+@layer components {
+  .friendlie-gradient {
+    background-image: linear-gradient(
+      135deg,
+      hsl(174 42% 94%) 0%,
+      hsl(38 92% 95%) 100%
+    );
+  }
+}
