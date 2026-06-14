@@ -1,4 +1,4 @@
-# Friendlie 🤝
+# Friendlie 
 
 **Find your next activity partner nearby.** Friendlie is a responsive,
 mobile-first web app for making **platonic** friendships and finding local
@@ -9,7 +9,7 @@ discovery UX — but it is **strictly non-romantic** by design.
 
 ---
 
-## ✨ Features
+## Features
 
 - **Landing page** explaining the platonic concept with clear sign-up / log-in CTAs
 - **Onboarding wizard** — profile basics, interests, activities, availability,
@@ -36,7 +36,7 @@ and never uses romantic terms.
 
 ---
 
-## 🧱 Tech stack
+## Tech stack
 
 | Layer      | Choice                                            |
 | ---------- | ------------------------------------------------- |
@@ -48,7 +48,7 @@ and never uses romantic terms.
 
 ---
 
-## 🚀 Getting started
+## Getting started
 
 ### 1. Prerequisites
 
@@ -113,7 +113,7 @@ like each other from Discover — a match and chat will appear instantly.
 
 ---
 
-## 📜 Scripts
+## Scripts
 
 | Command             | Description                          |
 | ------------------- | ------------------------------------ |
@@ -125,7 +125,7 @@ like each other from Discover — a match and chat will appear instantly.
 
 ---
 
-## 🗂️ Project structure
+## Project structure
 
 ```
 friendlie/
@@ -159,7 +159,7 @@ friendlie/
 
 ---
 
-## 🧠 How matching works
+## How matching works
 
 The compatibility score (0–100) is computed in
 [`src/lib/matching.ts`](src/lib/matching.ts) from four platonic signals:
@@ -181,7 +181,7 @@ Level Security.
 
 ---
 
-## 🔐 Safety & privacy model
+## Safety & privacy model
 
 - **Exact location is never exposed.** Coordinates are stored privately and only
   a coarse distance band (e.g. “under 5 km away”) is surfaced.
@@ -194,7 +194,7 @@ Level Security.
 
 ---
 
-## 🗃️ Database tables
+## Database tables
 
 `users`, `profiles`, `interests`, `user_interests`, `activities`,
 `user_activity_preferences`, `likes`, `matches`, `messages`, `reports`, `blocks` —
@@ -203,7 +203,7 @@ triggers, and policies.
 
 ---
 
-## 📦 Deployment
+## Deployment
 
 Friendlie deploys cleanly to [Vercel](https://vercel.com):
 
@@ -215,6 +215,6 @@ Friendlie deploys cleanly to [Vercel](https://vercel.com):
 
 ---
 
-## 📝 License
+## License
 
-MIT — build kind, safe, platonic communities. 💚
+MIT — build kind, safe, platonic communities.
