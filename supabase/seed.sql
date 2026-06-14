@@ -1,0 +1,77 @@
+-- ===========================================================================
+-- Friendlie — seed data for interests & activities
+-- Run AFTER schema.sql. Safe to re-run (uses upserts on slug).
+-- ===========================================================================
+
+insert into public.interests (slug, name, category, emoji) values
+  ('weightlifting',    'Weightlifting',     'fitness',      '🏋️'),
+  ('running',          'Running',           'fitness',      '🏃'),
+  ('yoga',             'Yoga',              'wellness',     '🧘'),
+  ('cycling',          'Cycling',           'fitness',      '🚴'),
+  ('home-cooking',     'Home Cooking',      'food',         '🍳'),
+  ('baking',           'Baking',            'food',         '🧁'),
+  ('coffee',           'Coffee',            'food',         '☕'),
+  ('vegan-food',       'Vegan Food',        'food',         '🥗'),
+  ('live-music',       'Live Music',        'music',        '🎸'),
+  ('vinyl-records',    'Vinyl Records',     'music',        '🎶'),
+  ('singing',          'Singing',           'music',        '🎤'),
+  ('video-games',      'Video Games',       'gaming',       '🎮'),
+  ('board-games',      'Board Games',       'gaming',       '🎲'),
+  ('tabletop-rpgs',    'Tabletop RPGs',     'gaming',       '🐉'),
+  ('fiction',          'Fiction',           'books',        '📚'),
+  ('non-fiction',      'Non-fiction',       'books',        '📖'),
+  ('poetry',           'Poetry',            'books',        '✍️'),
+  ('hiking',           'Hiking',            'outdoors',     '🥾'),
+  ('camping',          'Camping',           'outdoors',     '🏕️'),
+  ('gardening',        'Gardening',         'outdoors',     '🌱'),
+  ('birdwatching',     'Birdwatching',      'outdoors',     '🐦'),
+  ('painting',         'Painting',          'arts',         '🎨'),
+  ('photography',      'Photography',       'arts',         '📷'),
+  ('pottery',          'Pottery',           'arts',         '🏺'),
+  ('film',             'Film & Cinema',     'arts',         '🎬'),
+  ('animal-shelter',   'Animal Shelters',   'volunteering', '🐾'),
+  ('food-bank',        'Food Banks',        'volunteering', '🥫'),
+  ('community-cleanup','Community Cleanups','volunteering', '🧹'),
+  ('basketball',       'Basketball',        'sports',       '🏀'),
+  ('soccer',           'Soccer',            'sports',       '⚽'),
+  ('tennis',           'Tennis',            'sports',       '🎾'),
+  ('climbing',         'Climbing',          'sports',       '🧗'),
+  ('coding',           'Coding',            'tech',         '💻'),
+  ('startups',         'Startups',          'tech',         '🚀'),
+  ('ai-ml',            'AI & ML',           'tech',         '🤖'),
+  ('new-parents',      'New Parents',       'parenting',    '🍼'),
+  ('toddler-playdates','Toddler Playdates', 'parenting',    '🧸'),
+  ('dogs',             'Dogs',              'pets',         '🐕'),
+  ('cats',             'Cats',              'pets',         '🐈'),
+  ('backpacking',      'Backpacking',       'travel',       '🎒'),
+  ('road-trips',       'Road Trips',        'travel',       '🚗'),
+  ('languages',        'Languages',         'travel',       '🗣️'),
+  ('meditation',       'Meditation',        'wellness',     '🌬️')
+on conflict (slug) do update
+  set name = excluded.name, category = excluded.category, emoji = excluded.emoji;
+
+insert into public.activities (slug, name, category, emoji) values
+  ('morning-run',       'Morning Run',          'fitness',      '🏃'),
+  ('coffee-walk',       'Coffee Walk',          'food',         '☕'),
+  ('board-games',       'Board Game Night',     'gaming',       '🎲'),
+  ('cooking-together',  'Cooking Together',     'food',         '🍳'),
+  ('live-music',        'Live Music Outing',    'music',        '🎸'),
+  ('museum-visit',      'Museum Visit',         'arts',         '🖼️'),
+  ('hiking',            'Group Hike',           'outdoors',     '🥾'),
+  ('book-club',         'Book Club',            'books',        '📚'),
+  ('potluck',           'Potluck',              'food',         '🍲'),
+  ('cycling',           'Weekend Cycle',        'fitness',      '🚴'),
+  ('volunteering',      'Volunteering',         'volunteering', '🤝'),
+  ('yoga',              'Yoga Class',           'wellness',     '🧘'),
+  ('photography-walk',  'Photography Walk',     'arts',         '📷'),
+  ('farmers-market',    'Farmers'' Market',     'food',         '🥕'),
+  ('trivia-night',      'Trivia Night',         'gaming',       '🧠'),
+  ('dog-walk',          'Dog Walk',             'pets',         '🐕'),
+  ('rock-climbing',     'Rock Climbing',        'sports',       '🧗'),
+  ('pickup-basketball', 'Pickup Basketball',    'sports',       '🏀'),
+  ('language-exchange', 'Language Exchange',    'travel',       '🗣️'),
+  ('coworking',         'Casual Coworking',     'tech',         '💻'),
+  ('playground-meetup', 'Playground Meetup',    'parenting',    '🛝'),
+  ('gallery-opening',   'Gallery Opening',      'arts',         '🎨')
+on conflict (slug) do update
+  set name = excluded.name, category = excluded.category, emoji = excluded.emoji;
