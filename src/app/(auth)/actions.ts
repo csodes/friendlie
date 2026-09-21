@@ -19,7 +19,7 @@ export async function signIn(
     return { error: "Please enter your email and password." };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) return { error: error.message };
@@ -42,7 +42,7 @@ export async function signUp(
     return { error: "Use a valid email and a password of at least 8 characters." };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
@@ -66,7 +66,7 @@ export async function signUp(
 }
 
 export async function signOut() {
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/");
 }

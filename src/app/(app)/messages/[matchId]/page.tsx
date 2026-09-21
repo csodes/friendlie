@@ -9,11 +9,13 @@ export const dynamic = "force-dynamic";
 export default async function ChatPage({
   params,
 }: {
-  params: { matchId: string };
+  // Next.js 15+ passes route params as a Promise.
+  params: Promise<{ matchId: string }>;
 }) {
+  const { matchId } = await params;
   const [user, thread] = await Promise.all([
     getCurrentUser(),
-    getMatchThread(params.matchId),
+    getMatchThread(matchId),
   ]);
 
   if (!user || !thread.match || !thread.partner) {
@@ -22,7 +24,7 @@ export default async function ChatPage({
 
   // Pull hangout ideas for this match to seed icebreakers.
   const matches = await getMatches();
-  const summary = matches.find((m) => m.matchId === params.matchId);
+  const summary = matches.find((m) => m.matchId === matchId);
 
   return (
     <Chat

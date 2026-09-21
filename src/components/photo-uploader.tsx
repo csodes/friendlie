@@ -63,7 +63,6 @@ export function PhotoUploader({
             key={url}
             className="group relative aspect-square overflow-hidden rounded-xl border"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={url} alt="Profile" className="h-full w-full object-cover" />
             <button
               type="button"

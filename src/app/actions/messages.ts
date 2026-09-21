@@ -16,7 +16,7 @@ export async function sendMessage(
   if (!trimmed) return { ok: false, error: "Message is empty" };
   if (trimmed.length > 2000) return { ok: false, error: "Message is too long" };
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -37,7 +37,7 @@ export async function sendMessage(
 
 /** Mark all of the other member's messages in a thread as read. */
 export async function markThreadRead(matchId: string): Promise<void> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

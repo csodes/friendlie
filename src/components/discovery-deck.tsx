@@ -85,7 +85,6 @@ export function DiscoveryDeck({
         {/* Photo / header */}
         <div className="relative h-72 friendlie-gradient">
           {profile.photos[0] || profile.avatar_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={profile.photos[0] ?? profile.avatar_url ?? ""}
               alt={profile.display_name}

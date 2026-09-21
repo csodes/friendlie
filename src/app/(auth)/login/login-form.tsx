@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { useSearchParams } from "next/navigation";
 
 import { signIn } from "../actions";
@@ -25,7 +26,7 @@ function SubmitButton() {
 }
 
 export function LoginForm() {
-  const [state, formAction] = useFormState(signIn, {});
+  const [state, formAction] = useActionState(signIn, {});
   const params = useSearchParams();
   const redirect = params.get("redirect") ?? "/discover";
 

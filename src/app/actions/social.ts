@@ -24,7 +24,7 @@ export async function recordFeedAction(
   likeeId: string,
   action: LikeAction,
 ): Promise<ActionResult> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -65,7 +65,7 @@ export async function reportUser(
   reason: string,
   details?: string,
 ): Promise<ActionResult> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -87,7 +87,7 @@ export async function reportUser(
  * conversation disappears for both sides.
  */
 export async function blockUser(blockedId: string): Promise<ActionResult> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -115,7 +115,7 @@ export async function blockUser(blockedId: string): Promise<ActionResult> {
 
 /** Remove a block, allowing the two members to rediscover each other. */
 export async function unblockUser(blockedId: string): Promise<ActionResult> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
