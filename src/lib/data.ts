@@ -21,7 +21,7 @@ import type {
 // ---------------------------------------------------------------------------
 
 export async function getCurrentUser() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -29,7 +29,7 @@ export async function getCurrentUser() {
 }
 
 export async function getMyProfile(): Promise<Profile | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -45,7 +45,7 @@ export async function getMyProfile(): Promise<Profile | null> {
 }
 
 export async function getAllInterests(): Promise<Interest[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("interests")
     .select("*")
@@ -54,7 +54,7 @@ export async function getAllInterests(): Promise<Interest[]> {
 }
 
 export async function getAllActivities(): Promise<Activity[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("activities")
     .select("*")
@@ -63,7 +63,7 @@ export async function getAllActivities(): Promise<Activity[]> {
 }
 
 export async function getMyInterestIds(userId: string): Promise<string[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("user_interests")
     .select("interest_id")
@@ -72,7 +72,7 @@ export async function getMyInterestIds(userId: string): Promise<string[]> {
 }
 
 export async function getMyActivityIds(userId: string): Promise<string[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("user_activity_preferences")
     .select("activity_id")
@@ -90,7 +90,7 @@ export async function getDiscoveryFeed(): Promise<{
   viewerProfile: Profile | null;
   candidates: DiscoveryCandidate[];
 }> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -190,7 +190,7 @@ export async function getDiscoveryFeed(): Promise<{
 
 /** All mutual matches for the current member, with shared context + last message. */
 export async function getMatches(): Promise<MatchSummary[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -261,7 +261,7 @@ export async function getMatches(): Promise<MatchSummary[]> {
 
 /** Profiles the current member has blocked (for the settings list). */
 export async function getBlockedProfiles(): Promise<Profile[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -286,7 +286,7 @@ export async function getMatchThread(matchId: string): Promise<{
   partner: Profile | null;
   messages: Message[];
 }> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

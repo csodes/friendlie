@@ -18,7 +18,7 @@ import { createClient } from "@/lib/supabase/server";
 // Landing page is statically friendly but checks auth so we can point existing
 // members straight to their feed.
 export default async function LandingPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

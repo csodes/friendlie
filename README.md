@@ -40,7 +40,7 @@ and never uses romantic terms.
 
 | Layer      | Choice                                            |
 | ---------- | ------------------------------------------------- |
-| Framework  | [Next.js 14](https://nextjs.org) (App Router)     |
+| Framework  | [Next.js 16](https://nextjs.org) (App Router)     |
 | Language   | TypeScript                                        |
 | Styling    | Tailwind CSS + [shadcn/ui](https://ui.shadcn.com) |
 | Backend    | [Supabase](https://supabase.com) (Auth, Postgres, Realtime, Storage) |
@@ -52,7 +52,7 @@ and never uses romantic terms.
 
 ### 1. Prerequisites
 
-- Node.js 18.18+ (Node 20+ recommended)
+- Node.js 20.9+ (required by Next.js 16; Node 22 LTS recommended)
 - A free [Supabase](https://supabase.com) project
 
 ### 2. Install dependencies

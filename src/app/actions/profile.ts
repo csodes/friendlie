@@ -26,7 +26,7 @@ export interface ProfileInput {
 
 /** Replace the current member's selected interest rows. */
 export async function setInterests(interestIds: string[]) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -48,7 +48,7 @@ export async function setInterests(interestIds: string[]) {
 
 /** Replace the current member's preferred activity rows. */
 export async function setActivities(activityIds: string[]) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -75,7 +75,7 @@ export async function setActivities(activityIds: string[]) {
 
 /** Update profile fields (partial). */
 export async function updateProfile(input: Partial<ProfileInput>) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -101,7 +101,7 @@ export async function completeOnboarding(payload: {
   interestIds: string[];
   activityIds: string[];
 }): Promise<{ ok: boolean; error?: string }> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -131,7 +131,7 @@ export async function completeOnboarding(payload: {
 
 /** Permanently delete the member's account and all associated data. */
 export async function deleteAccount() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

@@ -6,9 +6,12 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
 /**
  * Server-side Supabase client for Server Components, Route Handlers and
  * Server Actions. Wires Supabase's auth cookies through Next's cookie store.
+ *
+ * Next.js 15+ makes `cookies()` async, so this factory is async too — every
+ * caller must `await createClient()`.
  */
-export function createClient() {
-  const cookieStore = cookies();
+export async function createClient() {
+  const cookieStore = await cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
