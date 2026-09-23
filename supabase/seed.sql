@@ -75,3 +75,35 @@ insert into public.activities (slug, name, category, emoji) values
   ('gallery-opening',   'Gallery Opening',      'arts',         '🎨')
 on conflict (slug) do update
   set name = excluded.name, category = excluded.category, emoji = excluded.emoji;
+
+-- ===========================================================================
+-- game_prompts — "This or That" prompt bank for the async matchup game
+-- ===========================================================================
+insert into public.game_prompts (slug, option_a, option_b, emoji_a, emoji_b, category) values
+  ('beach-mountains',      'Beach day',            'Mountain hike',        '🏖️', '⛰️', 'outdoors'),
+  ('coffee-tea',           'Coffee',               'Tea',                  '☕', '🍵', 'food'),
+  ('early-night-owl',      'Early riser',          'Night owl',            '🌅', '🌙', null),
+  ('planner-spontaneous',  'Plan every detail',    'Wing it',              '🗒️', '🎲', null),
+  ('movie-book',           'Movie night',          'Book night',           '🎬', '📚', 'arts'),
+  ('city-nature',          'City weekend',         'Nature getaway',       '🏙️', '🌲', 'travel'),
+  ('cook-order',           'Cook at home',         'Order takeout',        '🍳', '🥡', 'food'),
+  ('gym-outdoors',         'Gym workout',          'Outdoor workout',      '🏋️', '🏃', 'fitness'),
+  ('solo-group',           'Solo hangout',         'Group hangout',        '🧑', '👥', null),
+  ('dogs-cats',            'Dog person',           'Cat person',           '🐕', '🐈', 'pets'),
+  ('sweet-savory',         'Sweet snacks',         'Savory snacks',        '🍩', '🥨', 'food'),
+  ('board-video-games',    'Board games',          'Video games',         '🎲', '🎮', 'gaming'),
+  ('podcast-music',        'Podcasts',             'Music',                '🎙️', '🎵', 'music'),
+  ('road-trip-flight',     'Road trip',            'Flying',               '🚗', '✈️', 'travel'),
+  ('texts-calls',          'Text to chat',         'Call to chat',         '💬', '📞', null),
+  ('summer-winter',        'Summer',               'Winter',               '☀️', '❄️', null),
+  ('museum-concert',       'Museum visit',         'Live concert',         '🖼️', '🎤', 'arts'),
+  ('routine-adventure',    'Cozy routine',         'New adventure',        '🛋️', '🧭', null),
+  ('sunrise-sunset',       'Watch a sunrise',      'Watch a sunset',       '🌄', '🌇', 'outdoors'),
+  ('team-sport-solo',      'Team sports',          'Solo sports',          '🏀', '🏃', 'sports'),
+  ('camping-hotel',        'Camping',              'Hotel stay',           '🏕️', '🏨', 'outdoors'),
+  ('trivia-charades',      'Trivia night',         'Charades night',       '🧠', '🎭', 'gaming'),
+  ('baking-grilling',      'Baking',               'Grilling',             '🧁', '🍖', 'food'),
+  ('quiet-cafe-loud-bar',  'Quiet cafe',           'Loud bar',             '☕', '🍻', null)
+on conflict (slug) do update
+  set option_a = excluded.option_a, option_b = excluded.option_b,
+      emoji_a = excluded.emoji_a, emoji_b = excluded.emoji_b, category = excluded.category;

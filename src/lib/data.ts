@@ -8,6 +8,7 @@ import {
 import type {
   Activity,
   DiscoveryCandidate,
+  GameRound,
   Interest,
   MatchSummary,
   Message,
@@ -314,4 +315,54 @@ export async function getMatchThread(matchId: string): Promise<{
     partner: (partner as Profile) ?? null,
     messages: (messages as Message[]) ?? [],
   };
+}
+
+/**
+ * Build the "This or That" board for a match: every active prompt, enriched
+ * with the current member's pick and (once both have answered) the partner's
+ * pick. RLS on `game_answers` only lets us see the partner's row for a prompt
+ * we're matched on, which is exactly the reveal condition we want.
+ */
+export async function getGameRounds(matchId: string): Promise<GameRound[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data: match } = await supabase
+    .from("matches")
+    .select("id, user_a, user_b")
+    .eq("id", matchId)
+    .maybeSingle();
+  if (!match) return [];
+  const partnerId = match.user_a === user.id ? match.user_b : match.user_a;
+
+  const [{ data: prompts }, { data: answers }] = await Promise.all([
+    supabase
+      .from("game_prompts")
+      .select("*")
+      .eq("is_active", true)
+      .order("created_at", { ascending: true }),
+    supabase.from("game_answers").select("*").eq("match_id", matchId),
+  ]);
+
+  const answersByPrompt = new Map<string, { mine?: "a" | "b"; theirs?: "a" | "b" }>();
+  for (const a of answers ?? []) {
+    const entry = answersByPrompt.get(a.prompt_id as string) ?? {};
+    if (a.user_id === user.id) entry.mine = a.choice as "a" | "b";
+    else if (a.user_id === partnerId) entry.theirs = a.choice as "a" | "b";
+    answersByPrompt.set(a.prompt_id as string, entry);
+  }
+
+  return (prompts ?? []).map((p) => {
+    const entry = answersByPrompt.get(p.id as string);
+    return {
+      prompt: p as GameRound["prompt"],
+      myChoice: entry?.mine ?? null,
+      // Only surface the partner's pick once I've answered too — otherwise
+      // it would leak into the client payload before the "reveal".
+      partnerChoice: entry?.mine ? entry?.theirs ?? null : null,
+    };
+  });
 }

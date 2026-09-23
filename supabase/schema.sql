@@ -173,6 +173,36 @@ create table if not exists public.blocks (
   check (blocker_id <> blocked_id)
 );
 
+-- ---------------------------------------------------------------------------
+-- game_prompts — curated "This or That" prompts for the async matchup game
+-- ---------------------------------------------------------------------------
+create table if not exists public.game_prompts (
+  id          uuid primary key default gen_random_uuid(),
+  slug        text unique not null,
+  option_a    text not null,
+  option_b    text not null,
+  emoji_a     text not null default '🅰️',
+  emoji_b     text not null default '🅱️',
+  category    interest_category,
+  is_active   boolean not null default true,
+  created_at  timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
+-- game_answers — a member's pick for a prompt, scoped to a specific match.
+-- Both members answering the same prompt is what triggers a "reveal" in the UI.
+-- ---------------------------------------------------------------------------
+create table if not exists public.game_answers (
+  id          uuid primary key default gen_random_uuid(),
+  match_id    uuid not null references public.matches (id) on delete cascade,
+  prompt_id   uuid not null references public.game_prompts (id) on delete cascade,
+  user_id     uuid not null references public.profiles (id) on delete cascade,
+  choice      text not null check (choice in ('a', 'b')),
+  created_at  timestamptz not null default now(),
+  unique (match_id, prompt_id, user_id)
+);
+create index if not exists game_answers_match_idx on public.game_answers (match_id);
+
 -- ===========================================================================
 -- Functions & triggers
 -- ===========================================================================
@@ -334,6 +364,8 @@ alter table public.matches                    enable row level security;
 alter table public.messages                   enable row level security;
 alter table public.reports                    enable row level security;
 alter table public.blocks                     enable row level security;
+alter table public.game_prompts               enable row level security;
+alter table public.game_answers               enable row level security;
 
 -- users: a member can read/update only their own row.
 drop policy if exists users_self_select on public.users;
@@ -449,9 +481,45 @@ drop policy if exists blocks_self_all on public.blocks;
 create policy blocks_self_all on public.blocks
   for all using (blocker_id = auth.uid()) with check (blocker_id = auth.uid());
 
+-- game_prompts: world-readable curated prompt bank.
+drop policy if exists game_prompts_read on public.game_prompts;
+create policy game_prompts_read on public.game_prompts
+  for select using (is_active = true);
+
+-- game_answers: only visible to / insertable by the match's two participants.
+-- Reading the partner's choice for a prompt is what powers the "reveal" —
+-- RLS allows it because both members are already mutually matched.
+drop policy if exists game_answers_participant_select on public.game_answers;
+create policy game_answers_participant_select on public.game_answers
+  for select using (
+    exists (
+      select 1 from public.matches m
+      where m.id = match_id
+        and (m.user_a = auth.uid() or m.user_b = auth.uid())
+    )
+  );
+drop policy if exists game_answers_participant_insert on public.game_answers;
+create policy game_answers_participant_insert on public.game_answers
+  for insert with check (
+    user_id = auth.uid()
+    and exists (
+      select 1 from public.matches m
+      where m.id = match_id
+        and (m.user_a = auth.uid() or m.user_b = auth.uid())
+        and not public.is_blocked_between(m.user_a, m.user_b)
+    )
+  );
+-- allow a member to change their own pick before/after reveal
+drop policy if exists game_answers_participant_update on public.game_answers;
+create policy game_answers_participant_update on public.game_answers
+  for update using (user_id = auth.uid()) with check (user_id = auth.uid());
+
 -- ===========================================================================
--- Realtime — messages stream to matched participants
+-- Realtime — messages and game answers stream to matched participants
 -- ===========================================================================
 do $$ begin
   alter publication supabase_realtime add table public.messages;
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter publication supabase_realtime add table public.game_answers;
 exception when duplicate_object then null; end $$;

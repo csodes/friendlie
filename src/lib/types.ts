@@ -111,3 +111,32 @@ export interface Message {
   created_at: string;
   read_at: string | null;
 }
+
+/** A pick in the "This or That" async game. */
+export type GameChoice = "a" | "b";
+
+export interface GamePrompt {
+  id: string;
+  slug: string;
+  option_a: string;
+  option_b: string;
+  emoji_a: string;
+  emoji_b: string;
+  category: InterestCategory | null;
+}
+
+export interface GameAnswer {
+  id: string;
+  match_id: string;
+  prompt_id: string;
+  user_id: string;
+  choice: GameChoice;
+  created_at: string;
+}
+
+/** A prompt enriched with both members' answers for a given match, if in. */
+export interface GameRound {
+  prompt: GamePrompt;
+  myChoice: GameChoice | null;
+  partnerChoice: GameChoice | null;
+}
