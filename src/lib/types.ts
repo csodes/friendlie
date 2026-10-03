@@ -140,3 +140,49 @@ export interface GameRound {
   myChoice: GameChoice | null;
   partnerChoice: GameChoice | null;
 }
+
+/** A pick in the live Trivia Duel. */
+export type TriviaOption = "a" | "b" | "c" | "d";
+
+export type TriviaSessionStatus = "active" | "reveal" | "finished";
+
+export interface TriviaQuestion {
+  id: string;
+  slug: string;
+  question: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  correct_option: TriviaOption;
+  category: InterestCategory | null;
+}
+
+export interface TriviaSession {
+  id: string;
+  match_id: string;
+  status: TriviaSessionStatus;
+  question_ids: string[];
+  current_index: number;
+  question_started_at: string;
+  created_at: string;
+}
+
+export interface TriviaAnswer {
+  id: string;
+  session_id: string;
+  question_id: string;
+  user_id: string;
+  choice: TriviaOption;
+  created_at: string;
+}
+
+/** Everything the client needs to render the current state of a duel. */
+export interface TriviaBoard {
+  session: TriviaSession;
+  questions: TriviaQuestion[];
+  /** My choice per question id, for every question answered so far. */
+  myAnswers: Record<string, TriviaOption>;
+  /** Partner's choice per question id — only for questions already revealed. */
+  partnerAnswers: Record<string, TriviaOption>;
+}

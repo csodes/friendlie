@@ -33,6 +33,14 @@ do $$ begin
   create type report_status as enum ('open','reviewing','resolved','dismissed');
 exception when duplicate_object then null; end $$;
 
+do $$ begin
+  create type trivia_option as enum ('a', 'b', 'c', 'd');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create type trivia_session_status as enum ('active', 'reveal', 'finished');
+exception when duplicate_object then null; end $$;
+
 -- ---------------------------------------------------------------------------
 -- users — lightweight mirror of auth.users for FK convenience & moderation
 -- ---------------------------------------------------------------------------
@@ -203,6 +211,56 @@ create table if not exists public.game_answers (
 );
 create index if not exists game_answers_match_idx on public.game_answers (match_id);
 
+-- ---------------------------------------------------------------------------
+-- trivia_questions — curated multiple-choice bank for the live Trivia Duel
+-- ---------------------------------------------------------------------------
+create table if not exists public.trivia_questions (
+  id              uuid primary key default gen_random_uuid(),
+  slug            text unique not null,
+  question        text not null,
+  option_a        text not null,
+  option_b        text not null,
+  option_c        text not null,
+  option_d        text not null,
+  correct_option  trivia_option not null,
+  category        interest_category,
+  is_active       boolean not null default true,
+  created_at      timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
+-- trivia_sessions — one live duel between two matched members. State
+-- (current question, timing) lives here so either client can drive the game
+-- clock off a shared timestamp instead of needing a fragile "host" client.
+-- Only one non-finished session per match is allowed at a time.
+-- ---------------------------------------------------------------------------
+create table if not exists public.trivia_sessions (
+  id                  uuid primary key default gen_random_uuid(),
+  match_id            uuid not null references public.matches (id) on delete cascade,
+  status              trivia_session_status not null default 'active',
+  question_ids        uuid[] not null,
+  current_index       integer not null default 0,
+  question_started_at timestamptz not null default now(),
+  created_at          timestamptz not null default now()
+);
+create index if not exists trivia_sessions_match_idx on public.trivia_sessions (match_id);
+create unique index if not exists trivia_sessions_one_active_per_match
+  on public.trivia_sessions (match_id) where status <> 'finished';
+
+-- ---------------------------------------------------------------------------
+-- trivia_answers — a member's pick for one question within a session.
+-- ---------------------------------------------------------------------------
+create table if not exists public.trivia_answers (
+  id           uuid primary key default gen_random_uuid(),
+  session_id   uuid not null references public.trivia_sessions (id) on delete cascade,
+  question_id  uuid not null references public.trivia_questions (id) on delete cascade,
+  user_id      uuid not null references public.profiles (id) on delete cascade,
+  choice       trivia_option not null,
+  created_at   timestamptz not null default now(),
+  unique (session_id, question_id, user_id)
+);
+create index if not exists trivia_answers_session_idx on public.trivia_answers (session_id);
+
 -- ===========================================================================
 -- Functions & triggers
 -- ===========================================================================
@@ -350,6 +408,17 @@ returns boolean language sql stable security definer set search_path = public as
   );
 $$;
 
+-- Draw n random active trivia questions for a new session.
+create or replace function public.pick_random_trivia_questions(n integer default 6)
+returns uuid[] language sql stable as $$
+  select coalesce(array_agg(id), '{}') from (
+    select id from public.trivia_questions
+    where is_active = true
+    order by random()
+    limit n
+  ) t;
+$$;
+
 -- ===========================================================================
 -- Row Level Security
 -- ===========================================================================
@@ -366,6 +435,9 @@ alter table public.reports                    enable row level security;
 alter table public.blocks                     enable row level security;
 alter table public.game_prompts               enable row level security;
 alter table public.game_answers               enable row level security;
+alter table public.trivia_questions           enable row level security;
+alter table public.trivia_sessions            enable row level security;
+alter table public.trivia_answers             enable row level security;
 
 -- users: a member can read/update only their own row.
 drop policy if exists users_self_select on public.users;
@@ -514,12 +586,101 @@ drop policy if exists game_answers_participant_update on public.game_answers;
 create policy game_answers_participant_update on public.game_answers
   for update using (user_id = auth.uid()) with check (user_id = auth.uid());
 
+-- trivia_questions: world-readable curated question bank.
+drop policy if exists trivia_questions_read on public.trivia_questions;
+create policy trivia_questions_read on public.trivia_questions
+  for select using (is_active = true);
+
+-- trivia_sessions: visible to / manageable by the match's two participants.
+-- Either participant can insert (start a duel) or update (advance the shared
+-- game clock) — the app layer guards state transitions with a WHERE on the
+-- expected current_index so concurrent advances are idempotent no-ops.
+drop policy if exists trivia_sessions_participant_select on public.trivia_sessions;
+create policy trivia_sessions_participant_select on public.trivia_sessions
+  for select using (
+    exists (
+      select 1 from public.matches m
+      where m.id = match_id and (m.user_a = auth.uid() or m.user_b = auth.uid())
+    )
+  );
+drop policy if exists trivia_sessions_participant_insert on public.trivia_sessions;
+create policy trivia_sessions_participant_insert on public.trivia_sessions
+  for insert with check (
+    exists (
+      select 1 from public.matches m
+      where m.id = match_id
+        and (m.user_a = auth.uid() or m.user_b = auth.uid())
+        and not public.is_blocked_between(m.user_a, m.user_b)
+    )
+  );
+drop policy if exists trivia_sessions_participant_update on public.trivia_sessions;
+create policy trivia_sessions_participant_update on public.trivia_sessions
+  for update using (
+    exists (
+      select 1 from public.matches m
+      where m.id = match_id and (m.user_a = auth.uid() or m.user_b = auth.uid())
+    )
+  ) with check (
+    exists (
+      select 1 from public.matches m
+      where m.id = match_id and (m.user_a = auth.uid() or m.user_b = auth.uid())
+    )
+  );
+
+-- Defense in depth: a participant can advance status/current_index/timing,
+-- but never reassign a session to a different match or swap its questions.
+create or replace function public.lock_trivia_session_identity()
+returns trigger language plpgsql as $$
+begin
+  if new.match_id <> old.match_id or new.question_ids <> old.question_ids then
+    raise exception 'trivia_sessions.match_id and question_ids are immutable';
+  end if;
+  return new;
+end; $$;
+
+drop trigger if exists trivia_sessions_lock_identity on public.trivia_sessions;
+create trigger trivia_sessions_lock_identity before update on public.trivia_sessions
+  for each row execute function public.lock_trivia_session_identity();
+
+-- trivia_answers: only visible to / insertable by the session's two participants.
+drop policy if exists trivia_answers_participant_select on public.trivia_answers;
+create policy trivia_answers_participant_select on public.trivia_answers
+  for select using (
+    exists (
+      select 1 from public.trivia_sessions ts
+      join public.matches m on m.id = ts.match_id
+      where ts.id = session_id
+        and (m.user_a = auth.uid() or m.user_b = auth.uid())
+    )
+  );
+drop policy if exists trivia_answers_participant_insert on public.trivia_answers;
+create policy trivia_answers_participant_insert on public.trivia_answers
+  for insert with check (
+    user_id = auth.uid()
+    and exists (
+      select 1 from public.trivia_sessions ts
+      join public.matches m on m.id = ts.match_id
+      where ts.id = session_id
+        and (m.user_a = auth.uid() or m.user_b = auth.uid())
+        and not public.is_blocked_between(m.user_a, m.user_b)
+    )
+  );
+drop policy if exists trivia_answers_participant_update on public.trivia_answers;
+create policy trivia_answers_participant_update on public.trivia_answers
+  for update using (user_id = auth.uid()) with check (user_id = auth.uid());
+
 -- ===========================================================================
--- Realtime — messages and game answers stream to matched participants
+-- Realtime — messages, matchup games, and trivia duels stream live
 -- ===========================================================================
 do $$ begin
   alter publication supabase_realtime add table public.messages;
 exception when duplicate_object then null; end $$;
 do $$ begin
   alter publication supabase_realtime add table public.game_answers;
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter publication supabase_realtime add table public.trivia_sessions;
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter publication supabase_realtime add table public.trivia_answers;
 exception when duplicate_object then null; end $$;

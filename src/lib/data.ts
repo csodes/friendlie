@@ -13,6 +13,8 @@ import type {
   MatchSummary,
   Message,
   Profile,
+  TriviaBoard,
+  TriviaOption,
 } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
@@ -365,4 +367,73 @@ export async function getGameRounds(matchId: string): Promise<GameRound[]> {
       partnerChoice: entry?.mine ? entry?.theirs ?? null : null,
     };
   });
+}
+
+/**
+ * Load the most recent Trivia Duel for a match (any status), enriched with
+ * both members' answers. The partner's answer for the *current* question is
+ * only surfaced once it's actually revealed (past questions, or the current
+ * one once the shared timer has run out) — otherwise it'd leak into the
+ * client payload before the current member has answered.
+ */
+export async function getTriviaBoard(matchId: string): Promise<TriviaBoard | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: session } = await supabase
+    .from("trivia_sessions")
+    .select("*")
+    .eq("match_id", matchId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!session) return null;
+
+  const match = await supabase
+    .from("matches")
+    .select("user_a, user_b")
+    .eq("id", matchId)
+    .maybeSingle();
+  const partnerId =
+    match.data?.user_a === user.id ? match.data?.user_b : match.data?.user_a;
+
+  const questionIds = session.question_ids as string[];
+  const [{ data: questionRows }, { data: answerRows }] = await Promise.all([
+    supabase.from("trivia_questions").select("*").in("id", questionIds),
+    supabase.from("trivia_answers").select("*").eq("session_id", session.id),
+  ]);
+
+  const questionById = new Map((questionRows ?? []).map((q) => [q.id as string, q]));
+  const questions = questionIds
+    .map((id) => questionById.get(id))
+    .filter(Boolean) as TriviaBoard["questions"];
+
+  const myAnswers: Record<string, TriviaOption> = {};
+  const partnerAnswerRaw: Record<string, TriviaOption> = {};
+  for (const a of answerRows ?? []) {
+    if (a.user_id === user.id) myAnswers[a.question_id as string] = a.choice as TriviaOption;
+    else if (a.user_id === partnerId)
+      partnerAnswerRaw[a.question_id as string] = a.choice as TriviaOption;
+  }
+
+  const currentIndex = session.current_index as number;
+  const status = session.status as string;
+  const partnerAnswers: Record<string, TriviaOption> = {};
+  questions.forEach((q, i) => {
+    const revealedByTime = i < currentIndex || status === "reveal" || status === "finished";
+    if (revealedByTime || myAnswers[q.id]) {
+      const theirs = partnerAnswerRaw[q.id];
+      if (theirs) partnerAnswers[q.id] = theirs;
+    }
+  });
+
+  return {
+    session: session as TriviaBoard["session"],
+    questions,
+    myAnswers,
+    partnerAnswers,
+  };
 }
